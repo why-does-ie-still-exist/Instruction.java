@@ -23,7 +23,12 @@ public class Assembler {
       System.exit(0);
     }
     var asmFile = new File(args[0]);
-    var outFile = new File(args[1]);
+    File outFile;
+    if(args.length == 2){
+      outFile = new File(args[1]);
+    } else {
+      outFile = new File("program.dat");
+    }
     PrintWriter outWriter = null;
     try {
       outWriter = new PrintWriter(outFile);
