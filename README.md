@@ -6,6 +6,8 @@ More information about assembly syntax can be found there.
 
 This assembler was written using JDK 17 but only uses features from Java 10(var keyword).
 
+Note during compilation, `src/Assembler.java` is the main class.
+
 ### Sample Usage:
 
 After Compilation:
