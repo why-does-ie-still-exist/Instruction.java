@@ -26,3 +26,6 @@ hs_err_pid*
 /out/
 /.idea/
 /out.dat
+
+#excluding generated program because that changes regularly
+program.dat
