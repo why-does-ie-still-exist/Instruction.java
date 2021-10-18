@@ -47,7 +47,7 @@ public class Instruction {
         } else if (dest.getType() == 'r' && src.getType() == 'r') {
           orderString = "00";
         } else {
-          throw new IllegalArgumentException("Operands Malformed");
+          throw new IllegalArgumentException("Instruction Malformed");
         }
       }
     }

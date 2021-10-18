@@ -118,7 +118,11 @@ public class Assembler {
               var dataRangeParts = operands[i].trim().split("\\[|\\]");
               var name = dataRangeParts[0].toLowerCase(Locale.ROOT);
               var nth = Integer.parseInt(dataRangeParts[1]);
-              operands[i] = "@" + ranges.get(name).getNthAddress(nth);
+              try {
+                operands[i] = "@" + ranges.get(name).getNthAddress(nth);
+              } catch (NullPointerException n) {
+                  throw new NullPointerException("Label not found");
+              }
             }
           }
           for (int i = 0; i < operands.length; i++) { // turns labels into imm
@@ -132,8 +136,11 @@ public class Assembler {
             if (operands[1].matches(
                 "offset:\\w+")) { // Generate imm data range offset, can only be in second operand
               var offsetParts = operands[1].trim().split(":");
-              operands[1] =
-                  ranges.get(offsetParts[1].toLowerCase(Locale.ROOT)).getNthAddress(0) + "d";
+              try {
+                operands[1] = ranges.get(offsetParts[1].toLowerCase(Locale.ROOT)).getNthAddress(0) + "d";
+              } catch (NullPointerException n) {
+                throw new NullPointerException("Label not found");
+              }
             }
             instructions.add(Mnemonic.getMnemonic(instruction).getInstruction(operands, lineNum));
           } else {

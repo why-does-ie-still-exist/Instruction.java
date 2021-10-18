@@ -29,3 +29,5 @@ hs_err_pid*
 
 #excluding generated program because that changes regularly
 program.dat
+#exlude test.asm which is used for testing purposes and it modified regularly
+Test.asm
