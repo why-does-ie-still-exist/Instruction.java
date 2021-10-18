@@ -30,6 +30,18 @@ public enum Mnemonic {
     Instruction getInstruction(String[] ops, int lineNum) {
       return new Instruction("0010", ops, lineNum);
     }
+  },
+  GET {
+    @Override
+    Instruction getInstruction(String[] ops, int lineNum) {
+      return new Instruction("0011", ops, lineNum);
+    }
+  },
+  WRT {
+    @Override
+    Instruction getInstruction(String[] ops, int lineNum) {
+      return new Instruction("0100", ops, lineNum);
+    }
   };
 
   public static Mnemonic getMnemonic(String s) {
