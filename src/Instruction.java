@@ -1,9 +1,9 @@
 public class Instruction {
-  private String instructionID;
-  private String orderString;
+  private final String instructionID;
+  private final String orderString;
   private String regNum;
   private String value;
-  private int lineNum;
+  private final int lineNum;
 
   public Instruction(String instructionID, String[] ops, int lineNum) {
     this.lineNum = lineNum;
