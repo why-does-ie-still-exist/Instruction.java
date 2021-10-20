@@ -3,33 +3,41 @@ import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Scanner;
 
 public class Assembler {
   public static void main(String[] args) {
-    if (args.length == 0 || args.length > 2) {
+    if (args.length == 0 || args.length > 2) { // Check number of arguments
       System.out.println("You need one or two files as an argument.");
       System.exit(2); // ERROR_FILE_NOT_FOUND Code
     }
-    if (args.length == 1 && args[0].toLowerCase(Locale.ROOT).equals("-h")) {
-      System.out.println(
-          "This assembler takes one or two arguments: first an assembly input,"
-              + "and possibly a second argument for an output file. If not provided,"
-              + "the program will write out to program.dat in the current working directory.");
-      System.out.println("Example usage:");
-      System.out.println("java -jar IrohAsm.jar input.asm output.dat");
+
+    if (args.length == 1
+        && args[0].toLowerCase(Locale.ROOT).equals("-h")) { // check if using help option
+      printHelp();
       System.exit(0);
     }
-    var asmFile = new File(args[0]);
+
+    var asmFile = new File(args[0]); // create input file
+
+    Scanner input = null;
+    try { // initialize input scanner
+      input = new Scanner(asmFile);
+    } catch (FileNotFoundException f) {
+      System.out.println("File not found: " + args[0]);
+      System.exit(2); // ERROR_FILE_NOT_FOUND Code
+    }
+
     File outFile;
-    if (args.length == 2) {
+    if (args.length == 2) { // create ouput file with possible default filename
       outFile = new File(args[1]);
     } else {
       outFile = new File("program.dat");
     }
-    PrintWriter outWriter = null;
+
+    PrintWriter outWriter = null; // create output PrintWriter
     try {
       outWriter = new PrintWriter(outFile);
     } catch (FileNotFoundException e) {
@@ -37,15 +45,8 @@ public class Assembler {
       e.printStackTrace();
       System.exit(2); // ERROR_FILE_NOT_FOUND Code
     }
-    Scanner input = null;
-    try {
-      input = new Scanner(asmFile);
-    } catch (FileNotFoundException f) {
-      System.out.println("File not found: " + args[0]);
-      System.exit(2); // ERROR_FILE_NOT_FOUND Code
-    }
-    var instructions = new ArrayList<Instruction>();
-    var labels = new HashMap<String, Integer>();
+
+    var labels = new LinkedHashMap<String, Integer>();
     int instructionNum = 0;
 
     // Scan for labels
@@ -66,7 +67,7 @@ public class Assembler {
     int prevLastAddress = instructionNum;
     // scanning for named memory ranges at top of file
     Scanner input2 = null;
-    var ranges = new HashMap<String, DataRange>();
+    var ranges = new LinkedHashMap<String, DataRange>();
     try {
       input2 = new Scanner(asmFile);
     } catch (FileNotFoundException e) {
@@ -84,7 +85,8 @@ public class Assembler {
           prevLastAddress = range.getNextAddress();
           ranges.put(name, range);
         } else {
-          if (line.charAt(0) != '#') { // if line is not comment, stop initializing data ranges
+          if (line.charAt(0)
+              != '#') { // if line is not comment, it must be instruction, stop initializing
             break;
           }
         }
@@ -95,6 +97,7 @@ public class Assembler {
       System.exit(13); // ERROR_INVALID_DATA Code
     }
 
+    var instructions = new ArrayList<Instruction>();
     int lineNum = 1;
     Scanner input3 = null;
     try {
@@ -104,32 +107,17 @@ public class Assembler {
       System.exit(2); // ERROR_FILE_NOT_FOUND Code
     }
     while (input3.hasNext()) {
-      var line = input3.nextLine();
-      if (!(line.trim().matches("\\w+:")
-          || line.trim().matches("^\\w+\\[\\d+\\]$")
-          || line.trim().charAt(0)
+      var line = input3.nextLine().trim();
+      if (!(line.matches("\\w+:")
+          || line.matches("^\\w+\\[\\d+\\]$")
+          || line.charAt(0)
               == '#')) { // If line is not label, data range declaration, or comment, proceed.
         String[] tokens = line.split("[\\s|,]+");
         String instruction = tokens[0];
         String[] operands = Arrays.copyOfRange(tokens, 1, tokens.length);
         try {
-          for (int i = 0; i < operands.length; i++) { // generate offsets from data range
-            if (operands[i].matches("\\w+\\[\\d+\\]")) {
-              var dataRangeParts = operands[i].trim().split("\\[|\\]");
-              var name = dataRangeParts[0].toLowerCase(Locale.ROOT);
-              var nth = Integer.parseInt(dataRangeParts[1]);
-              try {
-                operands[i] = "@" + ranges.get(name).getNthAddress(nth);
-              } catch (NullPointerException n) {
-                  throw new NullPointerException("Label not found");
-              }
-            }
-          }
-          for (int i = 0; i < operands.length; i++) { // turns labels into imm
-            if (labels.containsKey(operands[i])) {
-              operands[i] = labels.get(operands[i]) + "d";
-            }
-          }
+          dereferenceRangeImms(operands, ranges);
+          dereferenceLabels(operands, labels); // turns labels into imm
           if (operands.length == 1) {
             instructions.add(Mnemonic.getMnemonic(instruction).getInstruction(operands, lineNum));
           } else if (operands.length == 2) {
@@ -137,7 +125,8 @@ public class Assembler {
                 "offset:\\w+")) { // Generate imm data range offset, can only be in second operand
               var offsetParts = operands[1].trim().split(":");
               try {
-                operands[1] = ranges.get(offsetParts[1].toLowerCase(Locale.ROOT)).getNthAddress(0) + "d";
+                operands[1] =
+                    ranges.get(offsetParts[1].toLowerCase(Locale.ROOT)).getNthAddress(0) + "d";
               } catch (NullPointerException n) {
                 throw new NullPointerException("Label not found");
               }
@@ -170,5 +159,38 @@ public class Assembler {
     }
     outWriter.close();
     System.out.println("Assembled without errors.");
+  }
+
+  public static void printHelp() {
+    System.out.println(
+        "This assembler takes one or two arguments: first an assembly input,"
+            + "and possibly a second argument for an output file. If not provided,"
+            + "the program will write out to program.dat in the current working directory.");
+    System.out.println("Example usage:");
+    System.out.println("java -jar IrohAsm.jar input.asm output.dat");
+  }
+
+  public static void dereferenceLabels(String[] operands, LinkedHashMap<String, Integer> labels) {
+    if (operands.length == 2) {
+      if (labels.containsKey(operands[1])) {
+        operands[1] = labels.get(operands[1]) + "d";
+      }
+    }
+  }
+
+  public static void dereferenceRangeImms(
+      String[] operands, LinkedHashMap<String, DataRange> ranges) {
+    for (int i = 0; i < operands.length; i++) { // generate offsets from data range
+      if (operands[i].matches("\\w+\\[\\d+\\]")) {
+        var dataRangeParts = operands[i].trim().split("\\[|\\]");
+        var name = dataRangeParts[0].toLowerCase(Locale.ROOT);
+        var nth = Integer.parseInt(dataRangeParts[1]);
+        try {
+          operands[i] = "@" + ranges.get(name).getNthAddress(nth);
+        } catch (NullPointerException n) {
+          throw new NullPointerException("Label not found");
+        }
+      }
+    }
   }
 }
