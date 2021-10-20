@@ -54,7 +54,7 @@ public class Assembler {
       var line = input.nextLine().trim();
       if (line.matches("\\w+:")) {
         // Line is label
-        labels.put(line.toLowerCase(Locale.ROOT).substring(0, line.length() - 1), instructionNum);
+        labels.put(line.toLowerCase(Locale.ROOT), instructionNum);
       } else if (!(line.charAt(0) == '#'
           || line.matches("^\\w+\\[\\d+\\]$"))) { // If line is not comment, it must be instruction
         instructionNum += 1;
@@ -171,9 +171,11 @@ public class Assembler {
   }
 
   public static void dereferenceLabels(String[] operands, LinkedHashMap<String, Integer> labels) {
-    if (operands.length == 2) {
-      if (labels.containsKey(operands[1])) {
-        operands[1] = labels.get(operands[1]) + "d";
+    String potentialLabel;
+    for (int i = 0; i < operands.length; i++) {
+      potentialLabel = operands[i].toLowerCase(Locale.ROOT) + ":";
+      if (labels.containsKey(potentialLabel)) {
+        operands[i] = labels.get(potentialLabel) + "d";
       }
     }
   }
