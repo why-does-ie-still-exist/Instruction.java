@@ -16,4 +16,4 @@ After Compilation:
 
 *By default, output binary is written to program.dat*
 
-`java -jar [Your Compiled Jar].jar "Multiplication_Example.asm" customfile.dat"`
+`java -jar [Your Compiled Jar].jar "Multiplication_Example.asm" "customfile.dat"`
